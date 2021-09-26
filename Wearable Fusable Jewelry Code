@@ -1,0 +1,17 @@
+/*
+  Turns an LED on for 0.75 seconds, then off for 0.25 seconds, repeatedly.
+*/
+
+int LED = 12;
+
+void setup() {
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(LED, HIGH);   
+  delay(750);                  
+  digitalWrite(LED, LOW);    
+  delay(250);                      
+}
