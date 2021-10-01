@@ -1,0 +1,101 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
+#include <Adafruit_NeoPixel.h>
+   
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
+
+#define LED_PIN 6
+#define LED_COUNT 1
+
+Adafruit_NeoPixel test(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+void displaySensorDetails(void)
+{
+  sensor_t sensor;
+  tsl.getSensor(&sensor);
+  Serial.println("------------------------------------");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" lux");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" lux");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" lux");  
+  Serial.println("------------------------------------");
+  Serial.println("");
+  delay(500);
+}
+
+void configureSensor(void)
+{
+  tsl.enableAutoRange(true);        
+
+  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
+
+  Serial.println("------------------------------------");
+  Serial.print  ("Gain:         "); Serial.println("Auto");
+  Serial.print  ("Timing:       "); Serial.println("13 ms");
+  Serial.println("------------------------------------");
+}
+
+void setup(void) 
+{
+  Serial.begin(9600);
+  Serial.println("Light Sensor Test"); Serial.println("");
+  
+  /* Initialise the sensor */
+  //use tsl.begin() to default to Wire, 
+  //tsl.begin(&Wire2) directs api to use Wire2, etc.
+  if(!tsl.begin())
+  {
+    /* There was a problem detecting the TSL2561 ... check your connections */
+    Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }
+  
+  /* Display some basic information on this sensor */
+  displaySensorDetails();
+  
+  /* Setup the sensor gain and integration time */
+  configureSensor();
+  
+  /* We're ready to go! */
+  Serial.println("");
+
+  test.begin();
+  test.setBrightness(50);
+  test.show();
+}
+
+void loop(void) 
+{  
+  /* Get a new sensor event */ 
+  sensors_event_t event;
+  tsl.getEvent(&event);
+ 
+  /* Display the results (light is measured in lux) */
+  if (event.light)
+  {
+    Serial.print(event.light); Serial.println(" lux");
+    if(event.light <= 30){
+      test.clear();
+      test.show();
+    } else if (event.light > 30 && event.light <= 50){
+      test.setPixelColor(255, 0, 255, 0);
+      test.show();
+    } else if (event.light > 50 && event.light <= 150){
+      test.setPixelColor(125, 255, 125, 0);
+      test.show();
+    } else {
+      test.setPixelColor(255, 0, 0, 0);
+      test.show();
+    }
+  }
+  else
+  {
+    /* If event.light = 0 lux the sensor is probably saturated
+       and no reliable data could be generated! */
+    Serial.println("Sensor overload");
+  }
+  delay(250);
+}
