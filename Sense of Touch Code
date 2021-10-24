@@ -20,7 +20,7 @@ CapPin L4 = CapPin(10);
 CapPin R4  = CapPin(1);    
 CapPin R1  = CapPin(3);     // read pin 3 (SCL on Flora)  - connect to 4
 CapPin R2  = CapPin(2);     // read pin 2 (SDA on Flora)  - connect to 5
-CapPin R3  = CapPin(0);     // read pin ccccccccccccccddccccccc0 (RX on Flora)   - connect to 6
+CapPin R3  = CapPin(0);     // read pin 0 (RX on Flora)   - connect to 6
 
 
 CapPin pins[] = {L1, L2, L3, L4, R1, R2, R3, R4};
