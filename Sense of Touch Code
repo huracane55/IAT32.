@@ -1,0 +1,109 @@
+
+#include <CapPin.h>
+#include <Keyboard.h>
+
+
+#define tonec    1911
+#define toned    1703
+#define tonee    1517
+#define tonef    1432
+#define toneg    1276
+#define tonea    1136
+#define toneb    1012
+#define toneC    955
+
+
+CapPin L1 = CapPin(12);   
+CapPin L2  = CapPin(6);    
+CapPin L3  = CapPin(9);     
+CapPin L4 = CapPin(10);   
+CapPin R4  = CapPin(1);    
+CapPin R1  = CapPin(3);     // read pin 3 (SCL on Flora)  - connect to 4
+CapPin R2  = CapPin(2);     // read pin 2 (SDA on Flora)  - connect to 5
+CapPin R3  = CapPin(0);     // read pin 0 (RX on Flora)   - connect to 6
+
+
+CapPin pins[] = {L1, L2, L3, L4, R1, R2, R3, R4};
+
+char Keys[] =   {'c','d','e','f','g','a','b','C'};
+
+boolean currentPressed[] = {false, false, false, false, false, false, false, false};
+
+#define THRESH 500
+
+float smoothed[8] = {0,0,0,0,0,0,0,0};
+
+int melod[] = {tonec, toned, tonee, tonef, toneg, tonea, toneb, toneC};
+int ritmo[] = {18,6, 18,6,8,12,12,6};
+int speaker = 5; 
+long vel = 20000;
+
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println("start");
+  Keyboard.begin();
+  pinMode(speaker, OUTPUT);
+}
+
+
+void loop()                    
+{ 
+  for (int i=0;i<8;i++) {
+    delay(1);
+    long total1 = 0;
+    long start = millis();
+    long total =  pins[i].readPin(2000);
+
+    if ((total > THRESH) && (! currentPressed[i])) {
+      Serial.print("Key pressed #"); Serial.print(i);
+      Serial.print(" ("); Serial.print(Keys[i]); Serial.println(")");
+      currentPressed[i] = true;
+      Keyboard.press(Keys[i]);
+  
+      int tom = melod[i];    
+      int tempo = ritmo[i];
+
+      long tvalue = tempo * vel;
+      tocar(tom, tvalue);
+    } 
+    else if ((total <= THRESH) && (currentPressed[i])) {
+      Serial.print("Key released #"); Serial.print(i);
+      Serial.print(" ("); Serial.print(Keys[i]); Serial.println(")");
+      currentPressed[i] = false;
+      Keyboard.release(Keys[i]);
+
+      int tom = 0;
+      int tempo = 0;
+      long tvalue = tempo * vel;
+      tocar(tom,tvalue);
+    }
+    delay(5);
+  }
+}
+
+void tocar(int tom, long tempo_value) {
+  long tempo_gasto = 0;
+  while (tempo_gasto < tempo_value) {
+    digitalWrite(speaker, HIGH);
+    delayMicroseconds(tom / 2);
+ 
+    digitalWrite(speaker, LOW);
+    delayMicroseconds(tom/2);   
+    tempo_gasto += tom;
+  }
+}
+
+int smooth(int data, float filterVal, float smoothedVal){
+
+  if (filterVal > 1){      // check to make sure param's are within range
+    filterVal = .999999;
+  }
+  else if (filterVal <= 0){
+    filterVal = 0;
+  }
+
+  smoothedVal = (data * (1 - filterVal)) + (smoothedVal  *  filterVal);
+
+  return (int)smoothedVal;
+}
